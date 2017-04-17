@@ -7,9 +7,9 @@ import os
 import ifcfg
 import json
 
-def arp_scan(interface,ipandsub):
+def arp_scan(interface,ipandsub,verbose=False):
    packet = Ether(dst = "ff:ff:ff:ff:ff:ff" )/ARP(pdst=ipandsub)
-   ans,unans = srp(packet,timeout=2,iface=interface)
+   ans,unans = srp(packet,timeout=2,iface=interface,verbose=verbose)
    values=[]
    for s,r in ans:
       mac = r.sprintf("%Ether.src%")
@@ -39,7 +39,7 @@ def calculate_network_id(ip_bin,subnet,net_addr):
       net_addr.append(ip_bin[i])
    return net_addr
    
-def start_scan():
+def start_scan(verbose=False):
    default = ifcfg.default_interface()
    ip = default['inet']
    ip_list = ip.split(".")
@@ -69,12 +69,12 @@ def start_scan():
    #print(network_id)
    interface = default['device']
    ipandsub = network_id+"/"+str(subnet)
-   values=[]
-   values = arp_scan(interface,ipandsub)
-   for i in values:
-      print(i)
-   #return values
+   return arp_scan(interface,ipandsub,verbose)
+
+def show(devices):
+   for device in devices:
+      print("%s\t%s" % device)
 
 if __name__ == "__main__":
-   start_scan()
-
+   devices = start_scan(verbose=True)
+   show(devices)
