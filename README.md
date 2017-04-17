@@ -5,6 +5,8 @@ IP and Mac address scanner ‒ Ubuntu
 - tcpdump
 - Python 2.7
   - scapy
+  - ifcfg
+  - json
 - sudo
 
 ## test
