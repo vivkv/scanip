@@ -1,12 +1,16 @@
 from __future__ import print_function
-import subprocess
+
 import types
 from scapy.all import *
 import os
 
+import ifcfg
+import json
+
 def arp_scan(ipandsub):
+   interface = ifcfg.default_interface()['device']
    packet = Ether(dst = "ff:ff:ff:ff:ff:ff" )/ARP(pdst=ipandsub)
-   ans,unans = srp(packet,timeout=2,iface="eth0")
+   ans,unans = srp(packet,timeout=2,iface=interface)
    values=[]
    for s,r in ans:
       temp = r.sprintf("%Ether.src% <---------> %ARP.psrc%")
@@ -35,8 +39,8 @@ def calculate_network_id(ip_bin,subnet,net_addr):
    return net_addr
    
 def start_scan():
-   f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
-   ip=f.read()
+   default = ifcfg.default_interface()
+   ip = default['inet']
    ip_list = ip.split(".")
    ip_bin = []
    for i in ip_list:
@@ -48,12 +52,7 @@ def start_scan():
          each_bin = '0b'+str(each_bin)
       ip_bin.append(each_bin)     	  
 
-   proc = subprocess.Popen('ifconfig',stdout=subprocess.PIPE)
-   while True:
-      line = proc.stdout.readline()
-      if 'HWaddr' in line:
-         break
-   mask = proc.stdout.readline().rstrip().split(b':')[-1]
+   mask = default['netmask']
    mask = mask.split(".")
    mask_bin = []
    subnet = 0
@@ -71,8 +70,9 @@ def start_scan():
    values=[]
    values = arp_scan(ipandsub)
    for i in values:
-      #print(i)
+      print(i)
    #return values
+
 if __name__ == "__main__":
    start_scan()
 
