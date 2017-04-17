@@ -7,8 +7,7 @@ import os
 import ifcfg
 import json
 
-def arp_scan(ipandsub):
-   interface = ifcfg.default_interface()['device']
+def arp_scan(interface,ipandsub):
    packet = Ether(dst = "ff:ff:ff:ff:ff:ff" )/ARP(pdst=ipandsub)
    ans,unans = srp(packet,timeout=2,iface=interface)
    values=[]
@@ -66,9 +65,10 @@ def start_scan():
    netid = calculate_network_id(ip_bin,subnet,net_addr)
    network_id = str(int(netid[0],2))+"."+str(int(netid[1],2))+"."+str(int(netid[2],2))+"."+str(int(netid[3],2))
    #print(network_id)
+   interface = default['device']
    ipandsub = network_id+"/"+str(subnet)
    values=[]
-   values = arp_scan(ipandsub)
+   values = arp_scan(interface,ipandsub)
    for i in values:
       print(i)
    #return values
