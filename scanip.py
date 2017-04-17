@@ -12,8 +12,10 @@ def arp_scan(interface,ipandsub):
    ans,unans = srp(packet,timeout=2,iface=interface)
    values=[]
    for s,r in ans:
-      temp = r.sprintf("%Ether.src% <---------> %ARP.psrc%")
-      values.append(temp)
+      mac = r.sprintf("%Ether.src%")
+      ip = r.sprintf("%ARP.psrc%")
+      tup = (mac,ip)
+      values.append(tup)
    return values
 	  
 def calculate_network_id(ip_bin,subnet,net_addr):
