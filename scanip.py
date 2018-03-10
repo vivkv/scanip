@@ -1,16 +1,21 @@
 from __future__ import print_function
-import subprocess
+
 import types
 from scapy.all import *
 import os
 
-def arp_scan(ipandsub):
+import ifcfg
+import json
+
+def arp_scan(interface,ipandsub,verbose=False):
    packet = Ether(dst = "ff:ff:ff:ff:ff:ff" )/ARP(pdst=ipandsub)
-   ans,unans = srp(packet,timeout=2,iface="eth0")
+   ans,unans = srp(packet,timeout=2,iface=interface,verbose=verbose)
    values=[]
    for s,r in ans:
-      temp = r.sprintf("%Ether.src% <---------> %ARP.psrc%")
-      values.append(temp)
+      mac = r.sprintf("%Ether.src%")
+      ip = r.sprintf("%ARP.psrc%")
+      tup = (mac,ip)
+      values.append(tup)
    return values
 	  
 def calculate_network_id(ip_bin,subnet,net_addr):
@@ -34,9 +39,9 @@ def calculate_network_id(ip_bin,subnet,net_addr):
       net_addr.append(ip_bin[i])
    return net_addr
    
-def start_scan():
-   f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
-   ip=f.read()
+def start_scan(verbose=False):
+   default = ifcfg.default_interface()
+   ip = default['inet']
    ip_list = ip.split(".")
    ip_bin = []
    for i in ip_list:
@@ -48,12 +53,7 @@ def start_scan():
          each_bin = '0b'+str(each_bin)
       ip_bin.append(each_bin)     	  
 
-   proc = subprocess.Popen('ifconfig',stdout=subprocess.PIPE)
-   while True:
-      line = proc.stdout.readline()
-      if 'HWaddr' in line:
-         break
-   mask = proc.stdout.readline().rstrip().split(b':')[-1]
+   mask = default['netmask']
    mask = mask.split(".")
    mask_bin = []
    subnet = 0
@@ -67,12 +67,14 @@ def start_scan():
    netid = calculate_network_id(ip_bin,subnet,net_addr)
    network_id = str(int(netid[0],2))+"."+str(int(netid[1],2))+"."+str(int(netid[2],2))+"."+str(int(netid[3],2))
    #print(network_id)
+   interface = default['device']
    ipandsub = network_id+"/"+str(subnet)
-   values=[]
-   values = arp_scan(ipandsub)
-   for i in values:
-      #print(i)
-   #return values
-if __name__ == "__main__":
-   start_scan()
+   return arp_scan(interface,ipandsub,verbose)
 
+def show(devices):
+   for device in devices:
+      print("%s\t%s" % device)
+
+if __name__ == "__main__":
+   devices = start_scan(verbose=True)
+   show(devices)
